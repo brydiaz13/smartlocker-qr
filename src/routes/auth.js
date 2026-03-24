@@ -31,7 +31,9 @@ router.post('/register', (req, res) => {
         const qr = await QRCode.toDataURL(payload, { errorCorrectionLevel: 'H' });
 
         // Guardar sesión en BD
-        db.run("INSERT INTO sessions (user_id, token) VALUES (?, ?)", [newUser.id, token]);
+        db.run("INSERT INTO sessions (user_id, token) VALUES (?, ?)", [newUser.id, token], (err) => {
+          if (err) console.error('Error creando sesión:', err);
+        });
 
         // Enviar correo con QR
   await sendEmail(
@@ -101,7 +103,8 @@ router.post('/open-with-qr', (req, res) => {
       if (err) return res.status(500).json({ ok: false, error: 'DB error' });
       if (!locker) {
         db.run('INSERT INTO access_logs (user_id, locker_id, action, success) VALUES (?, ?, ?, ?)',
-          [userId, null, 'open_attempt', 0]
+          [userId, null, 'open_attempt', 0],
+          (err) => { if (err) console.error('Error en access_log:', err); }
         );
         return res.status(400).json({ ok: false, error: 'No hay locker asignado' });
       }
@@ -109,7 +112,9 @@ router.post('/open-with-qr', (req, res) => {
       db.run('UPDATE lockers SET status = ? WHERE id = ?', ['open', locker.id], async (err) => {
         if (err) return res.status(500).json({ ok: false, error: 'DB error' });
         db.run('INSERT INTO logs (user_id, locker_id, action) VALUES (?, ?, ?)',
-  [userId, locker.id, 'open']);
+          [userId, locker.id, 'open'],
+          (err) => { if (err) console.error('Error en logs:', err); }
+        );
 
 
         // Registrar apertura exitosa
