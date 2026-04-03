@@ -1,59 +1,150 @@
 /* =========================================
-   TUS ESTILOS ORIGINALES (No los toqué)
+   SISTEMA DE DISEÑO PREMIUM (SmartLock)
    ========================================= */
+:root {
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --bg-dark: #0a0a0a;
+  --bg-card: #1a1a1a;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --success: #10b981;
+  --danger: #ef4444;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f6fa;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
-  /* Añadí esto para quitar bordes blancos feos */
+  overflow-x: hidden;
 }
 
-.container {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 300px;
-}
-
-input {
+/* Glassmorphism Container */
+.glass-container {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 2.5rem;
   width: 90%;
-  padding: 0.5rem;
-  margin: 0.5rem 0;
-  border: 1px solid #ccc;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+
+/* Dashboard Specific */
+.qr-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px;
+  margin: 1.5rem 0;
+  display: inline-block;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transition: transform 0.3s ease;
+}
+.qr-card:hover { transform: scale(1.02); }
+.qr-card img { max-width: 200px; height: auto; display: block; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  margin-top: 1rem;
+}
+
+.status-badge.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Scanner Specific */
+#reader {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+  margin-bottom: 1rem;
+}
+
+#result {
+  min-height: 24px;
+  font-weight: 500;
+  padding: 10px;
   border-radius: 8px;
 }
 
-button {
-  background-color: #1e88e5;
+/* Buttons */
+.btn-primary {
+  background: var(--primary);
   color: white;
   border: none;
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-button:hover {
-  background-color: #1565c0;
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
 }
 
-/* =========================================
-   NUEVOS ESTILOS SOLO PARA EL LOGIN (Diseño Figma)
-   ========================================= */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
 
-/* Sobrescribo el body solo para la página de login */
+.btn-outline:hover {
+  background: var(--glass);
+  color: white;
+}
+
+/* --- Login & Split Layout (Modernized) --- */
 .login-body {
   display: block;
-  background: #ffffff;
+  background: var(--bg-dark);
   font-family: 'Inter', sans-serif;
   overflow: hidden;
-  /* ¡Esto bloquea la página para que no se mueva ni cree barras de desplazamiento! */
 }
 
 .login-split-layout {
@@ -62,83 +153,108 @@ button:hover {
   width: 100%;
 }
 
-/* --- PANEL IZQUIERDO --- */
 .login-left {
   flex: 0 0 40%;
   padding: 2rem 4rem;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  background: var(--bg-dark);
 }
 
 .login-logo {
   font-weight: 700;
-  font-size: 1.2rem;
-  color: #000;
-  margin-bottom: auto;
-  /* Empuja el formulario hacia abajo */
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 2rem;
 }
 
 .login-form-container {
   max-width: 380px;
   width: 100%;
   margin: 0 auto;
-  margin-bottom: auto;
-  /* Mantiene el formulario centrado verticalmente */
 }
 
 .login-title {
   font-size: 2.2rem;
-  margin-bottom: 0.3rem;
-  color: #000;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
 }
 
 .login-subtitle {
-  color: #888;
-  font-size: 0.9rem;
-  margin-bottom: 2rem;
-}
-
-/* Ajustes específicos para los inputs del login para no afectar los tuyos */
-input.login-input {
-  width: 100%;
-  padding: 1rem;
-  margin: 0;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  color: var(--text-muted);
   font-size: 0.95rem;
-  box-sizing: border-box;
+  margin-bottom: 2.5rem;
 }
 
-input.login-input::placeholder {
-  color: #bbb;
+.login-input {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
 }
 
-/* Estilo exacto del input Email de tu Figma (Borde azul) */
-.input-floating-group {
-  position: relative;
-  margin-bottom: 1.5rem;
+.login-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.05);
 }
 
-input.active-input {
-  border: 2px solid #4285F4;
-  /* Azul de Google/Figma */
+.login-btn {
+  width: 100%;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-top: 1rem;
 }
 
-.floating-label {
-  position: absolute;
-  top: -8px;
-  left: 15px;
-  background: #fff;
-  padding: 0 5px;
-  font-size: 0.75rem;
-  color: #4285F4;
+.login-btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.login-footer-text {
+  text-align: center;
+  color: var(--text-muted);
+  margin-top: 2rem;
+  font-size: 0.9rem;
+}
+
+.login-footer-text a {
+  color: var(--primary);
+  text-decoration: none;
   font-weight: 600;
 }
 
-/* Estilo exacto del input Password (Ojito) */
-.input-icon-group {
-  position: relative;
-  margin-bottom: 1.5rem;
+.login-right {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.login-image-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.login-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
 }
 
 .toggle-password {
@@ -146,100 +262,69 @@ input.active-input {
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: #bbb;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
-/* Checkbox estilo Figma */
-.login-checkbox-group {
+.input-icon-group {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .login-left { flex: 1; padding: 2rem; }
+  .login-right { display: none; }
+}
+
+/* Navigation Icon */
+.nav-icon {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: var(--primary);
+  border-radius: 50%;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 2rem;
-}
-
-.login-checkbox-group input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: #000;
-}
-
-.login-checkbox-group label {
-  font-size: 0.9rem;
-  color: #333;
-  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
   cursor: pointer;
+  transition: 0.3s;
+  z-index: 100;
+}
+.nav-icon:hover { transform: scale(1.1); }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .glass-container { padding: 1.5rem; }
+  h1 { font-size: 1.5rem; }
 }
 
-/* Botón estilo Figma */
-button.login-btn {
-  width: 100%;
-  background-color: #4285F4;
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  margin-bottom: 2rem;
+/* Form Styles for Login/Register (keeping compatibility) */
+.form-group {
+  margin-bottom: 1.2rem;
+  text-align: left;
 }
-
-button.login-btn:hover {
-  background-color: #3367d6;
-}
-
-.login-footer-text {
-  text-align: center;
-  color: #888;
-  font-size: 0.9rem;
-}
-
-.login-footer-text a {
-  color: #4285F4;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.login-footer-text a:hover {
-  text-decoration: underline;
-}
-
-/* --- PANEL DERECHO (IMAGEN) --- */
-.login-right {
-  flex: 0 0 60%;
-  padding: 1rem 1rem 1rem 0;
-  /* Espacio para que parezca un marco como en tu diseño */
-}
-
-.login-image-wrapper {
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  /* Corta la imagen si se sale del borde redondeado */
-}
-
-.login-bg-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Hace que la imagen llene el espacio sin deformarse */
+.form-group label {
   display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
 }
-
-/* Responsivo para móviles */
-@media (max-width: 800px) {
-  .login-split-layout {
-    flex-direction: column;
-  }
-
-  .login-left {
-    flex: 1;
-    width: 100%;
-    padding: 2rem;
-  }
-
-  .login-right {
-    display: none;
-    /* Esconde la imagen en celulares */
-  }
+.form-group input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+  font-size: 0.95rem;
+  transition: 0.2s;
 }
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.05);
+}
