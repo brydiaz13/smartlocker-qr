@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendEmail } = require('../mail');
-
+const authMiddleware = require('../middlewares/authMiddleware');
+const iotService = require('../services/iotService');
 
 // 🔹 GET /api/lockers → lista todos los lockers
 router.get('/', (req, res) => {
@@ -67,62 +68,82 @@ router.get('/my-locker', (req, res) => {
   });
 });
 
-// 🔹 POST /api/open-with-qr → abrir locker mediante escaneo QR
-router.post('/open-with-qr', (req, res) => {
-  const { userId, token } = req.body;
+// 🔹 POST /api/lockers/open-with-qr → Abrir locker tras validar QR
+router.post('/open-with-qr', authMiddleware, (req, res) => {
+  const { userId } = req.body;
 
-  if (!userId || !token) {
-    return res.status(400).json({ ok: false, error: 'Datos incompletos' });
-  }
+  // Verificar que el usuario tenga un locker asignado
+  db.get('SELECT * FROM lockers WHERE assigned_user_id = ?', [userId], async (err, locker) => {
+    if (err) {
+      console.error('Error al buscar locker:', err);
+      return res.status(500).json({ ok: false, error: 'Error de base de datos.' });
+    }
 
-  // Enviar correo al usuario
-db.get('SELECT email, name FROM users WHERE id = ?', [userId], async (err, user) => {
-  if (!err && user) {
-    const html = `
-      <h2>Locker abierto correctamente</h2>
-      <p>Hola ${user.name},</p>
-      <p>Se registró la apertura del locker <strong>${locker.code}</strong>.</p>
-      <p>Fecha: ${new Date().toLocaleString()}</p>
-      <p>Si no fuiste tú, repórtalo de inmediato.</p>
-      <br>
-      <small>SmartLock System</small>
-    `;
-    await sendEmail(user.email, 'Notificación de apertura de locker', html);
-  }
-});
+    if (!locker) {
+      // Registrar intento fallido
+      db.run('INSERT INTO access_logs (user_id, locker_id, action, success) VALUES (?, ?, ?, ?)',
+        [userId, null, 'open_attempt', 0]
+      );
+      return res.status(404).json({ ok: false, error: 'No tienes un locker asignado.' });
+    }
 
-  // Verificar que la sesión del usuario sea válida
-  db.get('SELECT * FROM sessions WHERE user_id = ? AND token = ?', [userId, token], (err, session) => {
-    if (err) return res.status(500).json({ ok: false, error: 'DB error en sesión' });
-    if (!session) return res.json({ ok: false, error: 'Sesión inválida' });
+    try {
+      // 📡 SEÑAL IOT -> Simular comunicación con ESP32
+      const signalSent = await iotService.openLocker(locker.code);
 
-    // Verificar locker asignado
-    db.get('SELECT * FROM lockers WHERE assigned_user_id = ?', [userId], (err, locker) => {
-      if (err) return res.status(500).json({ ok: false, error: 'DB error en lockers' });
-      if (!locker) return res.json({ ok: false, error: 'No hay locker asignado' });
+      if (signalSent) {
+        // Actualizar estado en DB
+        db.run('UPDATE lockers SET status = ? WHERE id = ?', ['open', locker.id], (err) => {
+          if (err) console.error('Error al actualizar estado del locker:', err);
 
-      // Simular apertura del locker
-      db.run('UPDATE lockers SET status = ? WHERE id = ?', ['open', locker.id], (err) => {
-        if (err) return res.status(500).json({ ok: false, error: 'DB error al abrir locker' });
+          // Registro en Logs de acceso
+          db.run('INSERT INTO access_logs (user_id, locker_id, action, success) VALUES (?, ?, ?, ?)',
+            [userId, locker.id, 'open', 1]
+          );
 
-        // Volver a poner el locker como ocupado después de 3 segundos
-        setTimeout(() => {
-          db.run('UPDATE lockers SET status = ? WHERE id = ?', ['occupied', locker.id]);
-        }, 3000);
+          // Notificación por Correo
+          db.get('SELECT email, name FROM users WHERE id = ?', [userId], async (err, user) => {
+            if (!err && user) {
+              try {
+                const html = `
+                  <div style="font-family: Arial, sans-serif; color: #333;">
+                    <h2 style="color: #2c3e50;">🔓 Locker Abierto</h2>
+                    <p>Hola <strong>${user.name}</strong>,</p>
+                    <p>Se ha registrado la apertura del locker <strong>${locker.code}</strong>.</p>
+                    <p>Fecha y hora: ${new Date().toLocaleString()}</p>
+                    <hr>
+                    <small>Este es un mensaje automático de SmartLock System.</small>
+                  </div>`;
+                await sendEmail(user.email, 'Notificación de Apertura - SmartLock', html);
+              } catch (mailError) {
+                console.error("Error al enviar email:", mailError);
+              }
+            }
+          });
 
-        // Registrar acción en el log
-        db.run(
-          'INSERT INTO access_logs (user_id, locker_id, action, success) VALUES (?, ?, ?, ?)',
-          [userId, locker.id, 'open', 1]
-        );
+          // Cerrar automáticamente tras 3 segundos (Simulación de hardware)
+          const closeTimeout = process.env.NODE_ENV === 'test' ? 10 : 3000;
+          setTimeout(async () => {
+            try {
+              await iotService.closeLocker(locker.code);
+              db.run('UPDATE lockers SET status = ? WHERE id = ?', ['occupied', locker.id]);
+            } catch (err) {
+              console.error('Error in auto-close:', err);
+            }
+          }, closeTimeout);
 
-        res.json({
-          ok: true,
-          message: `Locker ${locker.code} abierto (simulado)`,
-          lockerId: locker.id
+          return res.json({
+            ok: true,
+            message: `Locker ${locker.code} abierto correctamente.`,
+            lockerId: locker.id,
+            timestamp: new Date().toISOString()
+          });
         });
-      });
-    });
+      }
+    } catch (iotError) {
+      console.error('Error en comunicación IoT:', iotError);
+      return res.status(503).json({ ok: false, error: 'Error de comunicación con el dispositivo IoT.' });
+    }
   });
 });
 
@@ -149,4 +170,3 @@ router.get('/logs', (req, res) => {
 });
 
 module.exports = router;
-
